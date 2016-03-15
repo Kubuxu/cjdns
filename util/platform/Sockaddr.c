@@ -109,6 +109,8 @@ int Sockaddr_parse(const char* input, struct Sockaddr_storage* out)
     char* lastColon = CString_strrchr(buff, ':');
     char* firstColon = CString_strchr(buff, ':');
     char* bracket = CString_strchr(buff, ']');
+    char* percent = CString_strchr(buff, '%');
+
     if (!lastColon) {
         // ipv4, no port
     } else if (lastColon != firstColon && (!bracket || lastColon < bracket)) {
@@ -123,6 +125,14 @@ int Sockaddr_parse(const char* input, struct Sockaddr_storage* out)
         *bracket = '\0';
         if (buff[0] != '[') { return -1; }
     } else if (buff[0] == '[') { return -1; }
+
+    int64_t scopeid = -1;
+    if (percent) {
+        // Scope ID
+        *percent = '\0';
+        if (!percent[1]) { return -1; }
+        if (Base10_fromString(&percent[1], &scopeid)) { return -1; }
+    }
 
     int64_t prefix = -1;
     char* slash = CString_strchr(buff, '/');
@@ -142,6 +152,9 @@ int Sockaddr_parse(const char* input, struct Sockaddr_storage* out)
         out->addr.addrLen = sizeof(struct sockaddr_in6) + Sockaddr_OVERHEAD;
         in6->sin6_port = Endian_hostToBigEndian16(port);
         in6->sin6_family = AF_INET6;
+        if (scopeid != -1) {
+            in6->sin6_scope_id = scopeid;
+        }
     } else {
         struct sockaddr_in* in = ((struct sockaddr_in*) Sockaddr_asNative(&out->addr));
         if (uv_inet_pton(AF_INET, (char*) buff, &in->sin_addr)) {
