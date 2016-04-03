@@ -33,6 +33,7 @@
 #ifdef HAS_ETH_INTERFACE
 #include "interface/ETHInterface_admin.h"
 #endif
+#include "interface/IP6MInterface_admin.h"
 #include "net/InterfaceController_admin.h"
 #include "interface/addressable/PacketHeaderToUDPAddrIface.h"
 #include "interface/ASynchronizer.h"
@@ -242,6 +243,7 @@ void Core_init(struct Allocator* alloc,
     InterfaceController_admin_register(nc->ifController, admin, alloc);
     SwitchPinger_admin_register(nc->sp, admin, alloc);
     UDPInterface_admin_register(eventBase, alloc, logger, admin, nc->ifController, fakeNet);
+    IP6MInterface_admin_register(eventBase, alloc, logger, admin, nc->ifController);
 #ifdef HAS_ETH_INTERFACE
     ETHInterface_admin_register(eventBase, alloc, logger, admin, nc->ifController);
 #endif
